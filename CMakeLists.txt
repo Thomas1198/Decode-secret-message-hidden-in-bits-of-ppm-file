@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.12)
+
+set(CMAKE_CXX_STANDARD 99)
+
+FILE(GLOB SOURCES "*.c")
+FILE(GLOB HEADERS "*.h")
+
+ADD_EXECUTABLE(ifj ${SOURCES} ${HEADERS})
