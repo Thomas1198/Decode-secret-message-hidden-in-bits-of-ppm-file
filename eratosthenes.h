@@ -12,6 +12,8 @@
 #include "bit_array.h"
 #include <math.h>
 
+#define N 222000000L
+
 void Eratosthenes(bit_array_t pole);
 
 #endif

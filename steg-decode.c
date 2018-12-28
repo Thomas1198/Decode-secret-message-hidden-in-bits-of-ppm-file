@@ -8,44 +8,38 @@
 
 #include "steg-decode.h"
 
-
-void decode(char data[]) {
-    bit_array_create(pole, 222000000L);
-    //unsigned long pole[100] = {222000000L, 0};
-    Eratosthenes(pole);
-
-    int znak = 0;
-    int pocitadlo = 1;
-    int bit = 0;
-
-    printf("Odsifrovana zprava: ");
-    for (long i = 11; i < 222000000L - 1; i++) {
-        if (bit_array_getbit(pole, i) == 0) {
-            bit = bit_array_getbit((&data[i]), 0);
-            bit_array_setbit((&znak), pocitadlo, bit);
-            pocitadlo++;
-            if (pocitadlo == CHAR_BIT) {
-                if (znak == '\0') {
-                    return;
-                }
-                printf("%c", znak);
-                pocitadlo = 0;
-            }
-        }
-    }
-}
-
-int main(int argc, char *argv[]) {
+int main(int argc, char **argv) {
     if (argc != 2) {
-        error_exit("Spatny format argumentu");
+        error_exit("Wrong format of arguments");
     }
 
     struct ppm *ppm_img = ppm_read(argv[1]);
     if (ppm_img == NULL) {
-        error_exit("Spatny soubor");
+        free(ppm_img);
+        error_exit("Wrong file");
     }
 
-    decode(ppm_img->data);
+    unsigned long j = 0;
+    char c;
+    bit_array_create(a, N);
+    Eratosthenes(a);
+    unsigned long size = ppm_img->xsize * ppm_img->ysize * 3;
+
+    for (unsigned long long i = 11; i < size; i++) {
+        if (bit_array_getbit(a, i) == 0) {
+            unsigned long b = bit_array_getbit((&ppm_img->data[i]), 0);
+            bit_array_setbit((&c - 1), j, b);
+            j++;
+        }
+        if (j == CHAR_BIT) {
+            if (c == '\0') {
+                break;
+            }
+            printf("%c", c);
+            j = 0;
+        }
+    }
+    printf("\n");
 
     free(ppm_img);
     return 0;

@@ -8,13 +8,14 @@
 
 #include "ppm.h"
 
-/*
-načte obsah PPM souboru do touto funkcí dynamicky
-alokované struktury. Při chybě formátu použije funkci warning_msg
-a vrátí NULL.  Pozor na "memory leaks".
+/**
+ * @brief  Loads data from file and checks its validity
+ * @param filename name of the file
+ * @return structure with read data else NULL
 */
 struct ppm *ppm_read(const char *filename) {
     FILE *fr;
+    struct ppm *ppm_picture;
     fr = fopen(filename, "rb");
     if (fr == NULL) {
         warning_msg("Could open file %s", filename);
@@ -22,26 +23,14 @@ struct ppm *ppm_read(const char *filename) {
     }
 
     unsigned xsize, ysize;
-    int color_depth;
-    unsigned long scanned_num = fscanf(fr, "P6 %u %u %d", &xsize, &ysize, &color_depth);
 
-    //Skip one whitespace
-    while (getc(fr) != '\n');
-
-    if (scanned_num != 3) {
+    if ((fscanf(fr, "P6\n%u %u\n255", &xsize, &ysize)) != 2) {
         fclose(fr);
         warning_msg("File %s has wrong format.\n", filename);
         return NULL;
     }
 
-    // Unsupported color format
-    if (color_depth != 255) {
-        warning_msg("Error in format of file %s detected.\n", filename);
-        fclose(fr);
-        return NULL;
-    }
-
-    struct ppm *ppm_picture = (struct ppm *) malloc(sizeof(struct ppm) + (xsize * ysize * 3));
+    ppm_picture = (struct ppm *) malloc(sizeof(struct ppm) + (xsize * ysize * 3));
     if (ppm_picture == NULL) {
         fclose(fr);
         warning_msg("Allocation error");
@@ -51,35 +40,27 @@ struct ppm *ppm_read(const char *filename) {
     ppm_picture->xsize = xsize;
     ppm_picture->ysize = ysize;
 
-    if (fread(ppm_picture->data, sizeof(char), (xsize * ysize * 3), fr) != (xsize * ysize * 3)) {
-        warning_msg("File %s has wrong format.\n", filename);
+    if(fread(&ppm_picture->data, sizeof(char), xsize * ysize * 3,fr)!=(xsize * ysize * 3)){
         fclose(fr);
         free(ppm_picture);
-        return NULL;
-    }
-
-    //has to end with EOF
-    if (fgetc(fr) != EOF) {
-        warning_msg("File %s has wrong format.\n", filename);
-        fclose(fr);
-        free(ppm_picture);
-        return NULL;
+        error_exit("Data reading error");
     }
 
     fclose(fr);
     return ppm_picture;
 }
 
-
-/*
-zapíše obsah struktury p do souboru ve formátu PPM.
-Při chybě použije funkci warning_msg a vrátí záporné číslo.
+/**
+ * @brief Writes ppm structure into ppm file
+ * @param p ppm structure to write
+ * @param filename name of the file
+ * @return it will return negative number when error
 */
 int ppm_write(struct ppm *p, const char *filename) {
     FILE *fwb;
     fwb = fopen(filename, "wb");
     if (fwb == NULL) {
-        warning_msg("Soubor %s se nepodarilo otevrit", filename);
+        warning_msg("Opening file error", filename);
         return -1;
     }
 
@@ -87,7 +68,7 @@ int ppm_write(struct ppm *p, const char *filename) {
     unsigned long pocet_nactenych = fwrite(&p->data, sizeof(char), velikost, fwb);
     if (pocet_nactenych != velikost) {
         fclose(fwb);
-        warning_msg("Zapis do souboru %s nebyl uspesny", filename);
+        warning_msg("Couldn't write into file %s", filename);
         return -1;
     }
 
